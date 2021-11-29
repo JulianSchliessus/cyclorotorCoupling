@@ -1,0 +1,19 @@
+#!/bin/bash
+#source /usr/lib/openfoam/openfoam2012/etc/bashrc
+cd "${0%/*}" || exit                                # Run from this directory
+#. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+#
+(
+  	of2012
+	#clean
+	rm -r openfoam/0.* openfoam/[1-9]* openfoam/postProcessing openfoam/processor* ./precice-run exchange*.sock
+	#python3 solidSolver.py > python.log 2>&1 &
+	#run
+	unbuffer decomposePar -case openfoam |tee decomposePar.log
+	unbuffer mpirun -np 7 overPimpleDyMFoam -case openfoam -parallel |tee overPimpleDyMFoam.log
+	#unbuffer pimpleFoam -case openfoam |tee pimpleFoam.log
+)
+
+#------------------------------------------------------------------------------

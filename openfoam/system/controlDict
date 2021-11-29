@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+libs            (overset fvMotionSolvers fvMotionDispZoneSolvers libcontrolled6DoFMotion_v2 liboversetpushfront);
+
+application     overPimpleDyMFoam;
+
+//startFrom       latestTime;
+startFrom       startTime;
+
+startTime       0;
+
+stopAt endTime;
+
+endTime         0.4; // 3.0295;
+
+deltaT          1e-4; // 0.000084153; // 1.402546811310133e-05; // 7.012734056550665e-07; /// daebutae avec e-06
+
+//writeControl    adjustableRunTime;
+//writeInterval   0.050492;
+adjustTimeStep  no;
+maxCo       40;
+
+writeControl    timeStep;
+writeInterval   1e1;
+
+purgeWrite      0;
+
+writeFormat     binary;
+
+writePrecision  10;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+//runTimeModifiable true;
+
+functions
+{
+	preCICE_Adapter
+	{
+		type preciceAdapterFunctionObject;
+		//libs ("libpreciceAdapterFunctionObject_debug.so");
+    	libs ("libpreciceAdapterFunctionObject.so");
+	}
+ //#includeFunc yPlus
+ //#includeFunc wallShearStress
+ //#include "bladeForces"
+ 
+ /*vorticity1
+ {
+  // Mandatory entries
+  type            vorticity;
+  libs            (fieldFunctionObjects);
+
+  // Optional (inherited) entries
+  field           U;
+  result          vorticityField;
+  //region          region0;
+  writeToFile     true;
+  enabled         true;
+  log             off;
+  executeControl  timeStep;
+  executeInterval 1;
+  writeControl    writeTime;
+  writeInterval   1;
+ }*/
+ 
+/*
+vtkWrite1
+{
+    type            vtkWrite;
+    libs            (utilityFunctionObjects);
+//    writeControl    writeTime;
+//    timeStart      0.00005;
+//    timeEnd        0.0016;
+    writeControl    adjustableRunTime;
+    writeInterval   0.0021038;
+    format          binary;
+    legacy          false;
+    decompose       false;
+    fields          (U p vorticityField cellTypes);
+//    fields          (".*");
+}
+*/
+
+}
+
+// ************************************************************************* //

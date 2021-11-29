@@ -1,0 +1,10 @@
+# body_Rod.sub
+
+#-----------------------------------------------------------------------------
+set: Body_RodElem_curr  = (NoDyn_RodElem_1st_Left-1)+Index;
+set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+   
+body: Body_RodElem_curr, NoDyn_RodElem_curr,
+   m_RodElem,                      # mass
+   null,                           # relative center of mass
+   diag, 1., I_RodElem, I_RodElem; # inertia matrix

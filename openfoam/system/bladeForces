@@ -1,0 +1,47 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+
+forces_airfoilLeft
+{
+    type            forces;
+    libs            ("libforces.so");
+    writeControl    writeTime;
+    writeInterval   -1;
+    enabled         true;
+
+    log           no;
+
+    patches       (airfoilLeft);
+    rho           rhoInf;     // Indicates incompressible
+    log           true;
+    rhoInf        1.2;          // Redundant for incompressible
+
+    CofR          (0 0 0);    // Rotation around centre line of propeller
+    pitchAxis     (0 0 1);
+}
+
+forces_airfoilRight
+{
+    type            forces;
+    libs            ("libforces.so");
+    writeControl    writeTime;
+    writeInterval   -1;
+    enabled         true;
+
+    log           no;
+
+    patches       (airfoilRight);
+    rho           rhoInf;     // Indicates incompressible
+    log           true;
+    rhoInf        1.2;          // Redundant for incompressible
+
+    CofR          (0 0 0);    // Rotation around centre line of propeller
+    pitchAxis     (0 0 1);
+}
+// ************************************************************************* //

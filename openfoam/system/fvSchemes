@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         backward;
+}
+
+gradSchemes
+{
+    default	cellLimited leastSquares 1;
+    grad(U)	cellLimited leastSquares 1;
+    grad(yPsi)      cellLimited Gauss linear 1.0;
+    limitedGrad	cellLimited leastSquares 1;
+}
+
+divSchemes
+{
+    default		none;
+    div(phi,U)		Gauss limitedLinearV 1;
+    div(phi,k)		Gauss upwind;
+    div(phi,omega)	Gauss upwind;
+    
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+//    default         Gauss linear corrected;
+      default Gauss linear limited corrected 0.5;
+      laplacian(yPsi) Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+//    default         corrected;
+    default limited corrected 0.5;  // faceCorrected
+}
+
+
+fluxRequired
+{
+    default         no;
+    pcorr           ;
+    p               ;
+    yPsi            ;
+}
+
+oversetInterpolation
+{
+    method    cellVolumeWeight; // cellVolumeWeight ;  // cellVolumeWeight   leastSquares;  // inverseDistance;    // trackingInverseDistance ;
+
+
+nPushFront 4; // 24; // push front in front of hole by n layers (0 to disable)
+layerRelax 1; // 0.25;
+
+
+}
+
+
+oversetInterpolationSuppressed
+{
+//   grad(p);
+//   surfaceIntegrate(phiHbyA);
+}
+
+
+wallDist
+{
+    method Poisson;
+//    method meshWave;
+    // Optionally correct distance from near-wall cells to the boundary
+    correctWalls    true;
+}
+
+
+
+// ************************************************************************* //
+

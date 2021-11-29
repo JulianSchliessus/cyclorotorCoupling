@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<precice-configuration>
+
+  <solver-interface dimensions="3">
+    <data:vector name="Force_Data_Right" />
+    <data:vector name="Displacement_Data_Right" />
+    <data:vector name="Force_Data_Left" />
+    <data:vector name="Displacement_Data_Left" />
+
+    <mesh name="Fluid-Mesh-Right">
+      <use-data name="Force_Data_Right" />
+      <use-data name="Displacement_Data_Right" />
+    </mesh>
+    
+    <mesh name="Fluid-Mesh-Left">
+      <use-data name="Force_Data_Left" />
+      <use-data name="Displacement_Data_Left" />
+    </mesh>
+    
+    <mesh name="Solid-Mesh-Right">
+      <use-data name="Displacement_Data_Right" />
+      <use-data name="Force_Data_Right" />
+    </mesh>
+    
+    <mesh name="Solid-Mesh-Left">
+      <use-data name="Displacement_Data_Left" />
+      <use-data name="Force_Data_Left" />
+    </mesh>
+
+    <participant name="Fluid">
+      <use-mesh name="Fluid-Mesh-Right" provide="yes" />
+      <use-mesh name="Fluid-Mesh-Left" provide="yes" />
+      <use-mesh name="Solid-Mesh-Right" from="Solid" />
+      <use-mesh name="Solid-Mesh-Left" from="Solid" />
+      <write-data name="Force_Data_Right" mesh="Fluid-Mesh-Right" />
+      <write-data name="Force_Data_Left" mesh="Fluid-Mesh-Left" />
+      <read-data name="Displacement_Data_Right" mesh="Fluid-Mesh-Right" />
+      <read-data name="Displacement_Data_Left" mesh="Fluid-Mesh-Left" />
+      <!--<export:vtk directory="Fluid-Output" />-->
+      <!--<mapping:rbf-thin-plate-splines direction="write" from="Fluid-Mesh-Right" to="Solid-Mesh-Right" constraint="conservative" z-dead="true"/>
+   	  <mapping:rbf-thin-plate-splines direction="read" from="Solid-Mesh-Right" to="Fluid-Mesh-Right" constraint="consistent" z-dead="true"/>-->
+   	  <mapping:rbf-compact-polynomial-c0 support-radius="5" direction="write" from="Fluid-Mesh-Right" to="Solid-Mesh-Right" constraint="conservative" z-dead="true"/>
+   	  <mapping:rbf-compact-polynomial-c0 support-radius="5" direction="write" from="Fluid-Mesh-Left" to="Solid-Mesh-Left" constraint="conservative" z-dead="true"/>
+   	  <mapping:rbf-compact-polynomial-c0 support-radius="5" direction="read" from="Solid-Mesh-Right" to="Fluid-Mesh-Right" constraint="consistent" z-dead="true"/>
+   	  <mapping:rbf-compact-polynomial-c0 support-radius="5" direction="read" from="Solid-Mesh-Left" to="Fluid-Mesh-Left" constraint="consistent" z-dead="true"/>
+    </participant>
+
+    <participant name="Solid">
+      <use-mesh name="Solid-Mesh-Right" provide="yes" />
+      <use-mesh name="Solid-Mesh-Left" provide="yes" />
+      <write-data name="Displacement_Data_Right" mesh="Solid-Mesh-Right" />
+      <write-data name="Displacement_Data_Left" mesh="Solid-Mesh-Left" />
+      <read-data name="Force_Data_Right" mesh="Solid-Mesh-Right" />
+      <read-data name="Force_Data_Left" mesh="Solid-Mesh-Left" />
+      <!--<export:vtk directory="Solid-Output" />-->
+    </participant>
+
+    <m2n:sockets from="Fluid" to="Solid" exchange-directory="." enforce-gather-scatter="0"/>
+
+    <coupling-scheme:parallel-explicit>
+      <time-window-size value="0.0001" />
+      <max-time value="1.5" />
+      <!--<max-iterations value="100"/>-->
+      
+      <!--<min-iteration-convergence-measure min-iterations="2" data="Displacement_Data" mesh="Solid-Mesh-Right" />-->
+      <!-- Must be second solver-->
+      
+      <!--<min-iteration-convergence-measure min-iterations="3" data="Force_Data" mesh="Solid-Mesh-Right" />-->
+      <participants first="Fluid" second="Solid" />
+      <exchange data="Force_Data_Right" mesh="Solid-Mesh-Right" from="Fluid" to="Solid" />
+      <exchange data="Force_Data_Left" mesh="Solid-Mesh-Left" from="Fluid" to="Solid" />
+      <exchange data="Displacement_Data_Right" mesh="Solid-Mesh-Right" from="Solid" to="Fluid" />
+      <exchange data="Displacement_Data_Left" mesh="Solid-Mesh-Left" from="Solid" to="Fluid" />
+    </coupling-scheme:parallel-explicit>
+  </solver-interface>
+</precice-configuration>

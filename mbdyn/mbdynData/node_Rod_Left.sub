@@ -1,0 +1,10 @@
+# node_Rod.sub
+
+#-----------------------------------------------------------------------------
+set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+
+structural: NoDyn_RodElem_curr, dynamic,
+   reference, Ref_RodElem_Anchor_Left, (Index-1)*L_RodElem, 0., 0., # absolute position
+   reference, Ref_RodElem_Anchor_Left, euler, 0., 0., phi_Rotor,   # absolute orientation
+   reference, Ref_RodElem_Anchor_Left, null,                        # absolute velocity
+   reference, Ref_RodElem_Anchor_Left, null;                        # absolute angular velocity

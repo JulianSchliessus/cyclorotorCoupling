@@ -1,0 +1,573 @@
+# beam_rotation.mbd
+
+#-----------------------------------------------------------------------------
+# [Data Block]
+
+begin: data;
+   problem: initial value;
+end: data;
+
+#-----------------------------------------------------------------------------
+# [Problem Block]
+
+begin: initial value;
+   initial time:   0.;
+   final time:     100.;
+   time step:      1.e-4;
+   max iterations: 1.e2;
+   tolerance:      1.e-4;
+   derivatives tolerance:      1.e-2;
+   derivatives coefficient: 0.5;
+   derivatives max iterations: 100;
+   #output: iterations;
+   #output: residual;
+end: initial value;
+
+#-----------------------------------------------------------------------------
+# Design Variables
+set: integer N_Right = 5; # Number of beams for the rod
+set: integer N_Left = 5; # Number of beams for the rod
+set: real N_real_Right = 5; # Number of beams for the rod
+set: real N_real_Left = 5; # Number of beams for the rod
+set: real blendyn_factor   = 1.;   		#[-]    Blendyn Factor
+set: real m_Rod    = 1.e-1;   		#[kg]    Mass of the rod
+set: real L_Rod    = 0.14506*blendyn_factor;  	#[m]     Length of the rod
+set: real m_Head   = 5.e-2;   		#[kg]    Mass of the head
+set: real I_Head   = 0.01; 		#[kgm^2] Moment of inertia of the head
+#set: real X_Slider = 0.5*blendyn_factor;  		#[m]     X position of the slider
+set: real R_Rotor = 0.5;		#[m]     Radius of Rotor
+set: real phi_Rotor = pi/2.;	#[rad]   Offset in Rotor
+
+set: real EA  = 1.e7;  #[N]    Beam stiffness of the rod
+set: real GAy = 0.6e7; #[N]    Beam stiffness of the rod
+set: real GAz = 0.6e7; #[N]    Beam stiffness of the rod
+set: real GJ  = 2.e2;  #[Nm^2] Beam stiffness of the rod
+#set: real EJy = 2.e2;  #[Nm^2] Beam stiffness of the rod
+set: real EJy = 1.e7;  #[Nm^2] Beam stiffness of the rod
+set: real EJz = 1.e2;  #[Nm^2] Beam stiffness of the rod
+#set: real EJz = 2.e2;  #[Nm^2] Beam stiffness of the rod
+
+set: real viscos_factor = 0.05; # Proportional viscosity factor of the rod
+
+#Force
+set: real Force_1 = 2.*1.e2;		#y Zielwert
+set: real Force_1_t = 1.e-100;
+set: real Force_1_m = Force_1/Force_1_t;		#m Steigung bei y = m*t
+
+#Rotation
+set: real Omega_1 = 1.e2;		#y Zielwert
+set: real Omega_1_t = 1.e-100;
+set: real Omega_1_m = Omega_1/Omega_1_t;		#m Steigung bei y = m*t
+set: real T_1 = 2.*pi/Omega_1;
+
+#-----------------------------------------------------------------------------
+# [Control Data Block]
+
+begin: control data;
+   structural nodes: 5
+   					 +(2+2*N_Left)
+   					 +(2+2*N_Right);
+   rigid bodies:     (3+2*N_Right)
+   					 +(3+2*N_Left);
+   joints:           5
+   					 +3
+   					 +3;
+   file drivers: 1;
+   beams:            N_Right
+   					 +N_Left;
+   forces:			 1;
+   default orientation: orientation vector;
+   gravity;
+end: control data;
+
+#-----------------------------------------------------------------------------
+# Reference Labels
+set: integer Ref_Ground = 1;
+set: integer Ref_GroundDisc = 2;
+
+set: integer Ref_RodElem_1st_Right = 101;
+set: integer Ref_RodElem_mid_Right = (Ref_RodElem_1st_Right-1)+2*N_Right;
+set: integer Ref_RodElem_end_Right = (Ref_RodElem_1st_Right-1)+2*N_Right+1;
+set: integer Ref_RodElem_Anchor_Right = (Ref_RodElem_1st_Right-1)+2*N_Right+2;
+
+set: integer Ref_RodElem_1st_Left = 201;
+set: integer Ref_RodElem_mid_Left = (Ref_RodElem_1st_Left-1)+2*N_Left;
+set: integer Ref_RodElem_end_Left = (Ref_RodElem_1st_Left-1)+2*N_Left+1;
+set: integer Ref_RodElem_Anchor_Left = (Ref_RodElem_1st_Left-1)+2*N_Left+2;
+
+# Node Labels
+set: integer NoSta_Ground      = 11;
+set: integer NoDyn_Ground      = 12;
+set: integer NoDyn_Ground_2      = 13;
+set: integer NoDyn_Ground_3      = 14;
+set: integer NoDyn_GroundDisc      = 15;
+set: integer NoDyn_RodElem_curr;
+
+set: integer NoDyn_RodElem_1st_Right = 1001;
+set: integer NoDyn_RodElem_end_Right = (NoDyn_RodElem_1st_Right-1)+2*N_Right+1;
+set: integer NoDyn_RodElem_Anchor_Right = (NoDyn_RodElem_1st_Right-1)+2*N_Right+2;
+
+set: integer NoDyn_RodElem_1st_Left = 2001;
+set: integer NoDyn_RodElem_end_Left = (NoDyn_RodElem_1st_Left-1)+2*N_Left+1;
+set: integer NoDyn_RodElem_Anchor_Left = (NoDyn_RodElem_1st_Left-1)+2*N_Left+2;
+
+# Driver Labels
+set: integer DrFile_Ground_GroundDisc = 1;
+
+# Body Labels
+set: integer Body_RodElem_curr;
+
+set: integer Body_Head_Right = 101;
+set: integer Body_Tail_Right = 102;
+
+set: integer Body_Head_Left = 201;
+set: integer Body_Tail_Left = 202;
+
+# Joint Labels
+set: integer JoClamp_Ground     = 1; # Clamp
+set: integer JoTotal_Ground     = 2; # Total
+set: integer JoTotal_Ground_2     = 3; # Total
+set: integer JoTotal_Ground_3     = 4; # Total
+set: integer JoTotal_Ground_GroundDisc_Rotation     = 5; # Clamp
+
+set: integer JoDist_GroundDisc_RodElem_7_Right     = 101; # Distance Joint
+set: integer JoAxRot_Ground_RodElem_anchor_Right 	= 102; #Axial Rotation
+set: integer JoRevHinge_RodElem_anchor_RodElem_mid_Right = 103;	#Revolute Hinge
+
+set: integer JoDist_GroundDisc_RodElem_7_Left     = 201; # Distance Joint
+set: integer JoAxRot_Ground_RodElem_anchor_Left 	= 202; #Axial Rotation
+set: integer JoRevHinge_RodElem_anchor_RodElem_mid_Left = 203;	#Revolute Hinge
+
+# Beam Labels
+set: integer Beam_RodElem_curr;
+
+# Index
+set: integer Index;
+
+#-----------------------------------------------------------------------------
+# Intermediate Variables
+set: real m_RodElem = m_Rod/N_Right/2.;
+set: real L_RodElem = L_Rod/N_Right/2.;
+set: real I_RodElem = m_RodElem*L_RodElem^2/12.;
+
+set: real m_RodElemEnd = m_RodElem/2.;
+set: real L_RodElemEnd = L_RodElem/2.;
+set: real I_RodElemEnd = m_RodElemEnd*L_RodElemEnd^2/12.;
+
+
+# Reference
+
+reference: Ref_Ground,
+   null,                        # absolute position
+   eye, 						# absolute orientation
+   null,                        # absolute velocity
+   null;                        # absolute angular velocity
+   
+reference: Ref_GroundDisc,
+   reference, Ref_Ground, 0., -0.06*R_Rotor, 0.,               # absolute position
+   reference, Ref_Ground, eye, 							# absolute orientation
+   reference, Ref_Ground, null,                        # absolute velocity
+   reference, Ref_Ground, null;                        # absolute angular velocity
+
+reference: Ref_RodElem_Anchor_Right,
+   reference, Ref_Ground, R_Rotor, -L_Rod/2., 0.,                  # absolute position
+   reference, Ref_Ground, euler, 0., 0., phi_Rotor,					 # absolute orientation
+   reference, Ref_Ground, null,                  # absolute velocity
+   reference, Ref_Ground, null;                  # absolute angular velocity
+   
+reference: Ref_RodElem_Anchor_Left,
+   reference, Ref_Ground, -R_Rotor, L_Rod/2., 0.,                  # absolute position
+   reference, Ref_Ground, euler, 0., 0., -phi_Rotor,					 # absolute orientation
+   reference, Ref_Ground, null,                  # absolute velocity
+   reference, Ref_Ground, null;                  # absolute angular velocity
+   
+#-----------------------------------------------------------------------------
+# [Nodes Block]
+
+begin: nodes;
+
+   #-----------------------------------------------------------------------------
+   # Structural Nodes
+   structural: NoSta_Ground, static,
+      reference, Ref_Ground, null, # absolute position
+      reference, Ref_Ground, eye,  # absolute orientation
+      reference, Ref_Ground, null, # absolute velocity
+      reference, Ref_Ground, null; # absolute angular velocity
+      
+   structural: NoDyn_Ground, static,
+      reference, Ref_Ground, null, # absolute position
+      reference, Ref_Ground, eye,  # absolute orientation
+      reference, Ref_Ground, null, # absolute velocity
+      reference, Ref_Ground, null; # absolute angular velocity
+      
+   structural: NoDyn_Ground_2, static,
+      reference, Ref_Ground, R_Rotor,0.,0., # absolute position
+      reference, Ref_Ground, eye,  # absolute orientation
+      reference, Ref_Ground, null, # absolute velocity
+      reference, Ref_Ground, null; # absolute angular velocity
+   
+   structural: NoDyn_Ground_3, static,
+      reference, Ref_Ground, -R_Rotor,0.,0., # absolute position
+      reference, Ref_Ground, eye,  # absolute orientation
+      reference, Ref_Ground, null, # absolute velocity
+      reference, Ref_Ground, null; # absolute angular velocity
+      
+   structural: NoDyn_GroundDisc, static,
+      reference, Ref_GroundDisc, null, # absolute position
+      reference, Ref_GroundDisc, eye,  # absolute orientation
+      reference, Ref_GroundDisc, null, # absolute velocity
+      reference, Ref_GroundDisc, null; # absolute angular velocity
+      
+   set: Index = 1;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+
+   set: Index = 2;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+
+   set: Index = 3;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 4;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 5;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 6;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 7;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 8;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 9;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 10;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+   
+   set: Index = 11;
+   include: "node_Rod_Right.sub";
+   include: "node_Rod_Left.sub";
+
+   set: Index = 12; #Anchor
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Right-1)+Index;
+   structural: NoDyn_RodElem_curr, dynamic,
+	   reference, Ref_RodElem_Anchor_Right, (Index/2-1)*L_RodElem, 0., 0., # absolute position
+	   reference, Ref_RodElem_Anchor_Right, euler, 0., 0., -phi_Rotor,   # absolute orientation
+	   reference, Ref_RodElem_Anchor_Right, null,                        # absolute velocity
+	   reference, Ref_RodElem_Anchor_Right, null;                        # absolute angular velocity
+	   
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+   structural: NoDyn_RodElem_curr, dynamic,
+	   reference, Ref_RodElem_Anchor_Left, (Index/2-1)*L_RodElem, 0., 0., # absolute position
+	   reference, Ref_RodElem_Anchor_Left, euler, 0., 0., phi_Rotor,   # absolute orientation
+	   reference, Ref_RodElem_Anchor_Left, null,                        # absolute velocity
+	   reference, Ref_RodElem_Anchor_Left, null;                        # absolute angular velocity
+      
+end: nodes;
+
+
+#-----------------------------------------------------------------------------
+# [Drivers Block]
+
+begin: drivers;
+	file: DrFile_Ground_GroundDisc, stream,
+        stream drive name, "SPRNGF",
+        create, yes,
+        path, "drive00.sock",
+		# nonblocking,
+		no signal,
+		echo, "body-in.echo",
+        1;	# force
+end: drivers;
+
+
+#-----------------------------------------------------------------------------
+# [Elements Block]
+
+begin: elements;
+
+   #-----------------------------------------------------------------------------
+   # Bodies
+   body: Body_Head_Right, NoDyn_RodElem_end_Right,
+      m_Head,                       # mass
+      null,                         # relative center of mass
+      diag, I_Head, I_Head, I_Head; # inertia matrix
+      
+   body: Body_Tail_Right, NoDyn_RodElem_1st_Right,
+      m_Head,                       # mass
+      null,                         # relative center of mass
+      diag, I_Head, I_Head, I_Head; # inertia matrix
+      
+   body: Body_Head_Left, NoDyn_RodElem_end_Left,
+      m_Head,                       # mass
+      null,                         # relative center of mass
+      diag, I_Head, I_Head, I_Head; # inertia matrix
+      
+   body: Body_Tail_Left, NoDyn_RodElem_1st_Left,
+      m_Head,                       # mass
+      null,                         # relative center of mass
+      diag, I_Head, I_Head, I_Head; # inertia matrix
+   
+   set: Index = 1;
+   set: Body_RodElem_curr  = (NoDyn_RodElem_1st_Right-1)+Index;
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Right-1)+Index;
+   body: Body_RodElem_curr, NoDyn_RodElem_curr,
+      m_RodElemEnd,                         # mass
+      0., L_RodElemEnd/2., 0.,              # relative center of mass
+      diag, 1., I_RodElemEnd, I_RodElemEnd; # inertia matrix
+      
+   set: Body_RodElem_curr  = (NoDyn_RodElem_1st_Left-1)+Index;
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+   body: Body_RodElem_curr, NoDyn_RodElem_curr,
+      m_RodElemEnd,                         # mass
+      0., L_RodElemEnd/2., 0.,              # relative center of mass
+      diag, 1., I_RodElemEnd, I_RodElemEnd; # inertia matrix
+      
+   set: Index = 2;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 3;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 4;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 5;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 6;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 7;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 8;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 9;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 10;
+   include: "body_Rod_Right.sub";
+   include: "body_Rod_Left.sub";
+   
+   set: Index = 11;
+   set: Body_RodElem_curr  = (NoDyn_RodElem_1st_Right-1)+Index;
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Right-1)+Index;
+   body: Body_RodElem_curr, NoDyn_RodElem_curr,
+      m_RodElem,                            # mass
+      0., -L_RodElemEnd/2., 0.,             # relative center of mass
+      diag, 1., I_RodElemEnd, I_RodElemEnd; # inertia matrix
+
+   set: Body_RodElem_curr  = (NoDyn_RodElem_1st_Left-1)+Index;
+   set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+   body: Body_RodElem_curr, NoDyn_RodElem_curr,
+      m_RodElem,                            # mass
+      0., -L_RodElemEnd/2., 0.,             # relative center of mass
+      diag, 1., I_RodElemEnd, I_RodElemEnd; # inertia matrix
+   
+   #-----------------------------------------------------------------------------
+   # Beams
+   set: Index = 2;
+   include: "beam_Rod_Right.sub";
+   include: "beam_Rod_Left.sub";
+   
+   set: Index = 4;
+   include: "beam_Rod_Right.sub";
+   include: "beam_Rod_Left.sub";
+   
+   set: Index = 6;
+   include: "beam_Rod_Right.sub";
+   include: "beam_Rod_Left.sub";
+   
+   set: Index = 8;
+   include: "beam_Rod_Right.sub";
+   include: "beam_Rod_Left.sub";
+   
+   set: Index = 10;
+   include: "beam_Rod_Right.sub";
+   include: "beam_Rod_Left.sub";
+
+   #-----------------------------------------------------------------------------
+   # Joints
+   joint: JoClamp_Ground,
+      clamp,
+         NoSta_Ground,
+            reference, Ref_Ground, null, # absolute position
+            reference, Ref_Ground, eye;  # absolute
+			
+	joint: JoTotal_Ground_GroundDisc_Rotation,
+      total joint,
+         NoDyn_Ground,
+            position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         NoDyn_GroundDisc,
+         	position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         position constraint,
+			active, # "active" if CM includes "1"; "inactive" otherwise
+			active, # "active" if CM includes "2"; "inactive" otherwise
+			active, # "active" if CM includes "3"; "inactive" otherwise
+			null,
+		orientation constraint,
+			active, # "active" if CM includes "4"; "inactive" otherwise
+			active, # "active" if CM includes "5"; "inactive" otherwise
+			active, # "active" if CM includes "6"; "inactive" otherwise
+			single, 0., 0., 1.,
+			file, DrFile_Ground_GroundDisc, 1;
+   
+   joint: JoTotal_Ground,
+      total joint,
+         NoDyn_Ground,
+            position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         NoSta_Ground,
+         	position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         position constraint,
+			inactive, # "active" if CM includes "1"; "inactive" otherwise
+			inactive, # "active" if CM includes "2"; "inactive" otherwise
+			active, # "active" if CM includes "3"; "inactive" otherwise
+			null,
+		orientation constraint,
+			active, # "active" if CM includes "4"; "inactive" otherwise
+			active, # "active" if CM includes "5"; "inactive" otherwise
+			active, # "active" if CM includes "6"; "inactive" otherwise
+			null;
+	
+	joint: JoTotal_Ground_2,
+      total joint,
+         NoDyn_Ground,
+            position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         NoDyn_Ground_2,
+         	position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         position constraint,
+			active, # "active" if CM includes "1"; "inactive" otherwise
+			active, # "active" if CM includes "2"; "inactive" otherwise
+			active, # "active" if CM includes "3"; "inactive" otherwise
+			null,
+		orientation constraint,
+			active, # "active" if CM includes "4"; "inactive" otherwise
+			active, # "active" if CM includes "5"; "inactive" otherwise
+			active, # "active" if CM includes "6"; "inactive" otherwise
+			null;
+			
+	joint: JoTotal_Ground_3,
+      total joint,
+         NoDyn_Ground,
+            position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         NoDyn_Ground_3,
+         	position, reference, Ref_Ground, null,
+            position orientation, reference, Ref_Ground, eye,
+            rotation orientation, reference, Ref_Ground, eye,
+         position constraint,
+			active, # "active" if CM includes "1"; "inactive" otherwise
+			active, # "active" if CM includes "2"; "inactive" otherwise
+			active, # "active" if CM includes "3"; "inactive" otherwise
+			null,
+		orientation constraint,
+			active, # "active" if CM includes "4"; "inactive" otherwise
+			active, # "active" if CM includes "5"; "inactive" otherwise
+			active, # "active" if CM includes "6"; "inactive" otherwise
+			null;
+            
+   joint: JoDist_GroundDisc_RodElem_7_Right,
+      distance,
+         NoDyn_GroundDisc,
+            position, null,                                # relative offset
+         (NoDyn_RodElem_1st_Right-1)+2,
+         	position, null,
+         const, model::current("L");
+            
+   joint: JoAxRot_Ground_RodElem_anchor_Right,
+      axial rotation,
+         NoDyn_Ground,
+            reference, Ref_Ground, null,                     # relative offset
+            hinge, reference, Ref_Ground, eye, # relative orientation
+         (NoDyn_RodElem_1st_Right-1)+12,
+            reference, Ref_Ground, null,                                # relative offset
+            hinge, reference, Ref_Ground, eye, # relative axis orientation
+         sample and hold,
+         ramp, Omega_1_m, 0., Omega_1_t, 0.,
+         ramp, Omega_1_m, 0., Omega_1_t, 0.;    # angular velocity
+   
+   joint: JoRevHinge_RodElem_anchor_RodElem_mid_Right,
+      revolute hinge,
+         (NoDyn_RodElem_1st_Right-1)+12,
+            reference, Ref_RodElem_Anchor_Right, (12/2-1)*L_RodElem, 0., 0., # absolute position
+            hinge, reference, Ref_RodElem_Anchor_Right, euler, 0., 0., -phi_Rotor,  # absolute orientation
+         (NoDyn_RodElem_1st_Right-1)+6,
+            reference, Ref_RodElem_Anchor_Right, (6-1)*L_RodElem, 0., 0., # absolute position
+            hinge, reference, Ref_RodElem_Anchor_Right, euler, 0., 0., -phi_Rotor;  # absolute orientation
+
+   joint: JoDist_GroundDisc_RodElem_7_Left,
+      distance,
+         NoDyn_GroundDisc,
+            position, null,                                # relative offset
+         (NoDyn_RodElem_1st_Left-1)+2,
+         	position, null,
+         const, model::current("L");
+            
+   joint: JoAxRot_Ground_RodElem_anchor_Left,
+      axial rotation,
+         NoDyn_Ground,
+            reference, Ref_Ground, null,                     # relative offset
+            hinge, reference, Ref_Ground, eye, # relative orientation
+         (NoDyn_RodElem_1st_Left-1)+12,
+            reference, Ref_Ground, null,                                # relative offset
+            hinge, reference, Ref_Ground, eye, # relative axis orientation
+         sample and hold,
+         ramp, Omega_1_m, 0., Omega_1_t, 0.,
+         ramp, Omega_1_m, 0., Omega_1_t, 0.;    # angular velocity
+   
+   joint: JoRevHinge_RodElem_anchor_RodElem_mid_Left,
+      revolute hinge,
+         (NoDyn_RodElem_1st_Left-1)+12,
+            reference, Ref_RodElem_Anchor_Left, (12/2-1)*L_RodElem, 0., 0., # absolute position
+            hinge, reference, Ref_RodElem_Anchor_Left, euler, 0., 0., -phi_Rotor,  # absolute orientation
+         (NoDyn_RodElem_1st_Left-1)+6,
+            reference, Ref_RodElem_Anchor_Left, (6-1)*L_RodElem, 0., 0., # absolute position
+            hinge, reference, Ref_RodElem_Anchor_Left, euler, 0., 0., -phi_Rotor;  # absolute orientation
+         
+#-----------------------------------------------------------------------------
+   # Gravity
+   gravity: uniform, 0., -1., 0., const, 9.81;
+   
+   #force: 10, follower, NoDyn_RodElem_1st_Right, position, null, 0., 1., 0., sample and hold, ramp, Force_1_m, 0., Force_1_t, 0., ramp, Force_1_m, 0., Force_1_t, 0.;
+   #force: 11, follower, NoDyn_RodElem_1st_Left, position, null, 0., 1., 0., sample and hold, ramp, Force_1_m, 0., Force_1_t, 0., ramp, Force_1_m, 0., Force_1_t, 0.;
+   
+   force: 12, external structural, socket, create, yes, path, "membrane.sock", no signal, sleep time, 0.05, coupling, tight, orientation, orientation vector, accelerations, no, 13+13, (NoDyn_RodElem_1st_Right-1)+1, (NoDyn_RodElem_1st_Right-1)+2, (NoDyn_RodElem_1st_Right-1)+3, (NoDyn_RodElem_1st_Right-1)+4, (NoDyn_RodElem_1st_Right-1)+5, (NoDyn_RodElem_1st_Right-1)+6, (NoDyn_RodElem_1st_Right-1)+7, (NoDyn_RodElem_1st_Right-1)+8, (NoDyn_RodElem_1st_Right-1)+9, (NoDyn_RodElem_1st_Right-1)+10, (NoDyn_RodElem_1st_Right-1)+11, (NoDyn_RodElem_1st_Right-1)+12, NoDyn_Ground_2,(NoDyn_RodElem_1st_Left-1)+11, (NoDyn_RodElem_1st_Left-1)+10, (NoDyn_RodElem_1st_Left-1)+9, (NoDyn_RodElem_1st_Left-1)+8, (NoDyn_RodElem_1st_Left-1)+7, (NoDyn_RodElem_1st_Left-1)+6, (NoDyn_RodElem_1st_Left-1)+5, (NoDyn_RodElem_1st_Left-1)+4, (NoDyn_RodElem_1st_Left-1)+3, (NoDyn_RodElem_1st_Left-1)+2, (NoDyn_RodElem_1st_Left-1)+1, (NoDyn_RodElem_1st_Left-1)+12, NoDyn_Ground_3;
+                       
+end: elements;

@@ -1,0 +1,20 @@
+# beam_Rod.sub
+
+#-----------------------------------------------------------------------------
+set: Beam_RodElem_curr  = (NoDyn_RodElem_1st_Left-1)+Index;
+set: NoDyn_RodElem_curr = (NoDyn_RodElem_1st_Left-1)+Index;
+
+# Beams
+beam3: Beam_RodElem_curr,
+   NoDyn_RodElem_curr-1,
+      null,            # relative offset
+   NoDyn_RodElem_curr,
+      null,            # relative offset
+   NoDyn_RodElem_curr+1,
+      null,            # relative offset
+   eye,                                 # orientation matrix section I
+   linear viscoelastic generic,         # constitutive law section I
+      diag, EA, GAy, GAz, GJ, EJy, EJz,    # stiffness
+      proportional, viscos_factor,         # proportional viscosity factor
+   same,                                # orientation matrix section II
+   same;                                # constitutive law section II

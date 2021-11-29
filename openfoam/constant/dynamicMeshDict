@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+dynamicFvMesh       dynamicOversetFvMesh;
+
+
+motionSolver solidBodyDisplacementLaplacianMultiZone;
+
+solidBodyDisplacementLaplacianMultiZoneCoeffs
+{
+	c0
+	{
+		solidBodyMotionFunction  controlled6DoFMotion;
+		controlled6DoFMotionCoeffs
+		{
+			socket_id         00;	//socket_id of background mesh must be 00
+			centreOfGravity (0. 0. 0.);
+			
+		}
+	}
+	c1
+	{
+		solidBodyMotionFunction  controlled6DoFMotion;
+		controlled6DoFMotionCoeffs
+		{
+			socket_id         01;	//socket_id must begin with 01 for airfoil patches
+									//and then increment
+			centreOfGravity (0.5 0. 0.);
+			
+		}
+	}
+	c2
+	{
+		solidBodyMotionFunction  controlled6DoFMotion;
+		controlled6DoFMotionCoeffs
+		{
+			socket_id         02;
+			centreOfGravity (-0.5 0. 0.);
+		}
+	}
+	diffusivity uniform 1;
+	frozenPointsZone c0ptsZone;
+}
+
+
+
+
+
+// ************************************************************************* //

@@ -1,0 +1,56 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      preciceDict;
+}
+
+preciceConfig "precice-config.xml";
+
+participant Fluid;
+
+modules (FSI);
+
+interfaces
+{
+  Interface1
+  {
+    mesh              Fluid-Mesh-Right;
+    patches           (airfoilRight);
+    locations         faceNodes;
+    
+    readData
+    (
+      Displacement_Data_Right
+    );
+    
+    writeData
+    (
+      Force_Data_Right
+    );
+  };
+  Interface2
+  {
+    mesh              Fluid-Mesh-Left;
+    patches           (airfoilLeft);
+    locations         faceNodes;
+    
+    readData
+    (
+      Displacement_Data_Left
+    );
+    
+    writeData
+    (
+      Force_Data_Left
+    );
+  };
+};
+
+FSI
+{
+  rho rho [1 -3 0 0 0 0 0] 1;
+  nu nu [ 0 2 -1 0 0 0 0 ] 1e-03;
+}

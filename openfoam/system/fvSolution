@@ -1,0 +1,202 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+
+    /*"cellDisplacement.*"
+    {
+        solver          GAMG;
+        tolerance       1e-12;
+        relTol          0;
+        smoother        GaussSeidel;
+        cacheAgglomeration false;
+        nCellsInCoarsestLevel 10;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
+    }*/
+//Alternativ das geht auch ok:
+    "cellDisplacement.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+
+        tolerance       1e-12;
+        relTol          0;
+        minIter         5;
+    }
+    
+
+
+    p
+    {
+    solver          PBiCGStab;
+    	preconditioner  DILU;
+    		tolerance       1e-3;
+    			relTol          0;
+    				minIter 1;
+    }
+
+	pFinal
+    {
+    	$p;
+    		tolerance 1e-4;
+    }
+    
+/*    
+    "(pcorr|pcorrFinal)"
+    {
+        solver          GAMG;
+        tolerance       1e-2;
+        relTol          0;
+        //smoother        DICGaussSeidel;
+        smoother        GaussSeidel;
+        nCellsInCoarsestLevel 256;
+
+        agglomerator    faceAreaPair;
+        minIter 1;
+        maxIter 5;
+    }
+    */
+    
+    "(pcorr|pcorrFinal)"
+    {
+        $p
+        minIter 1;
+        maxIter 5;
+    }
+
+
+    /*"yPsi.*"
+    {
+        solver          GAMG;
+        tolerance       1e-12;
+        relTol          0;
+        smoother        GaussSeidel;
+        cacheAgglomeration false;
+        nCellsInCoarsestLevel 10;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
+    }*/
+    yPsi
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-8;
+        relTol          0.0;
+        minIter 20;
+    }
+
+
+    "(U|omega|k)"
+    {
+    	solver          PBiCGStab;
+    		preconditioner  DILU;
+	    		tolerance       1e-8;
+	    			relTol          0;
+	    				minIter     1;
+    }
+
+/*
+    "(U|omega|k)"
+    {
+    	solver          smoothSolver;
+    		smoother  symGaussSeidel;
+	    		tolerance       1e-8;
+	    			relTol          0;
+	    				minIter     1;
+    }
+*/
+
+    "(U|omega|k)Final"
+    {
+    $U;
+    	tolerance       1e-9;
+    		relTol          0;
+    }
+
+}
+
+PIMPLE
+{
+
+    ddtCorr             true;
+    correctPhi          false; 
+    oversetAdjustPhi    true; // Adjust the balance of fluxes on the faces between interpolated and calculated to obey continuity. 
+
+    checkMeshCourantNo  yes;
+    momentumPredictor   true;
+    nOuterCorrectors    30; // was 30 b4 testing overSet
+    nCorrectors         3;
+    nNonOrthogonalCorrectors 3;
+    turbOnFinalIterOnly false;
+
+
+    residualControl
+    {
+
+    
+    
+
+	
+        "(U|k|omega)"		
+        
+        {
+            relTol          0;
+            tolerance       1e-2;
+        }
+        
+        p
+        {
+            relTol 0;
+            tolerance 1e-2;
+        }
+    }
+}
+
+
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+        //U               0.1;
+//        UFinal          1.0;
+        pFinal          0.9;
+    }
+    equations
+    {
+        U             0.7; // "(U|k|omega|yWall|pcorr|yPsi)"
+        pcorr  0.7;
+        "yWall|yPsi"  1.0;
+        "(k|omega)"             0.7; // "(U|k|omega|yWall|pcorr|yPsi)"
+        pcorrFinal       0.9; // "(U|k|omega|yWall|pcorr|yPsi)Final"
+        "(yWall|yPsi)Final"        1.0; // "(U|k|omega|yWall|pcorr|yPsi)Final"
+        "(k|omega)Final"        0.9; // "(U|k|omega|yWall|pcorr|yPsi)Final"
+        UFinal       0.9;
+        /*
+        "(U)"   0.7;
+        "(k|omega)"   1.0;
+        "(U)Final" 1.0;
+        "(k|omega)Final"   1.0;
+     */
+    }
+}
+
+
+// ************************************************************************* //
+
